@@ -11,9 +11,30 @@ const CHECK = "fa-check-circle";
 const UNCHECK = "fa-circle";
 const LINE_THROUGH = "lineThrough";
 
-// Variables
-let LIST= [];
- let id = 0;
+//Variables
+let LIST, id;
+
+// get item from local storage
+let todoData = localStorage.getItem("TODO_ITEMS");
+
+// check if data is not empty
+if(todoData){
+    LIST = JSON.parse(todoData);
+    id = LIST.length; // Set the id value to the last one in the list
+    loadList(LIST); //Load the list to the user interface
+}else {
+    //if data is empty
+    LIST = [];
+    id = 0;
+}
+
+//Load items to the user's interface
+function loadList(array) {
+    array.forEach(function(item) {
+        addToDo(item.name, item.id, item.completed, item.deleted, item.date);
+        
+    });
+}
 
 // Show date
 const date = new Date();
@@ -21,7 +42,6 @@ const dateformart = {weekday: "long", month:"short", day:"numeric"};
 dateElement.innerHTML = date.toLocaleDateString("en-US" , dateformart);
 
 //functions
-
 // Open sidebar function
 function sidebarOpen() {
   document.getElementById("mySidebar").style.display = "block";
@@ -42,9 +62,9 @@ function addToDo(todoItem, id, completed, deleted) {
   const line = completed ? LINE_THROUGH : "";
 
   const item = `<li class="item">
-                  <i class="far ${complete} co" job="complete" id="${id}"></i>
+                  <i class="far ${complete} co" action="completed" id="${id}"></i>
                   <p class="text ${line}">${todoItem}</p>
-                  <i class="fas fa-trash-alt de" job="delete" id="${id}"></i>
+                  <i class="fas fa-trash-alt de" action="delete" id="${id}"></i>
               </li>
               `;
   const position = "beforeend";
@@ -52,14 +72,14 @@ function addToDo(todoItem, id, completed, deleted) {
 }
 
 
-// Add an item to the list after typing and hitting the enter key
+// Add an item to the list
 function getTodo(event) {
   if (event.key === 'Enter'){
       const todoItem = todoInput.value;
 
       // If input isn't empty
       if(todoItem) {
-          addToDo(todoItem, id, false, false);
+          addToDo(todoItem, id, false, false, date);
           LIST.push({
               name: todoItem,
               id: id,
@@ -68,9 +88,38 @@ function getTodo(event) {
               date: date,
           });
           //add(update) item to local storage
-          localStorage.setItem("TODO", JSON.stringify(LIST));
+          localStorage.setItem("TODO_ITEMS", JSON.stringify(LIST));
           id++;
       }
       todoInput.value = "";
   }
 }
+
+// Completed todo items
+function completedToDO(element) {
+  element.classList.toggle(CHECK);
+  element.classList.toggle(UNCHECK);
+  element.parentNode.querySelector(".text").classList.toggle(LINE_THROUGH);
+  
+  LIST[element.id].completed = LIST[element.id].completed ? false : true;
+}
+
+// Remove to do
+function removeToDo(element) {
+  element.parentNode.parentNode.removeChild(element.parentNode);
+  LIST[element.id].deleted = true;
+}
+
+// Target the items created dynamically
+todoList.addEventListener("click", function(event){
+  const element = event.target; // return the clicked element inside list
+  const elementJob = element.attributes.action.value; // complete or delete
+
+  if(elementJob === "completed") {
+      completedToDO(element);
+  }else if(elementJob ==="delete"){
+      removeToDo(element);
+  }
+  //add(update) item to local storage
+  localStorage.setItem("TODO_ITEMS", JSON.stringify(LIST)); 
+});
